@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>i助教：國小學習輔助系統</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            @apply bg-gray-50 text-gray-800; /* Light background, dark text */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Modal specific styles (kept for other modals) */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%; /* Responsive width */
+            max-width: 800px; /* Max width for larger screens */
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #333;
+            text-decoration: none;
+        }
+        .video-container { /* Only for video modals/embeds now */
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        .video-container video, .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        /* Mobile menu specific styles */
+        .mobile-menu {
+            transform: translateX(100%); /* Hidden by default */
+            transition: transform 0.3s ease-in-out;
+        }
+        .mobile-menu.open {
+            transform: translateX(0); /* Slide in */
+        }
+        /* Video slider dot styles */
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .dot.active {
+            background-color: white;
+        }
+        /* Custom scrollbar hide for the video slider */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Header Section -->
+    <header class="bg-white text-gray-700 p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center">
+                <h1 class="text-2xl sm:text-3xl font-bold rounded-lg p-2 text-blue-600">i助教</h1>
+            </div>
+            <!-- Desktop Navigation -->
+            <nav class="hidden sm:flex">
+                <ul class="flex space-x-6 text-sm sm:text-base">
+                    <li><a href="#features-intro-video" class="nav-link hover:text-blue-600 transition duration-300 px-2 py-1 rounded-md">系統介紹</a></li>
+                    <li><a href="#features" class="nav-link hover:text-blue-600 transition duration-300 px-2 py-1 rounded-md">核心功能</a></li>
+                    <li><a href="#advanced-features" class="nav-link hover:text-blue-600 transition duration-300 px-2 py-1 rounded-md">進階特色</a></li>
+                    <li><a href="#applications" class="nav-link hover:text-blue-600 transition duration-300 px-2 py-1 rounded-md">應用面向</a></li>
+                    <li><a href="#interview-video" class="nav-link hover:text-blue-600 transition duration-300 px-2 py-1 rounded-md">主任訪談</a></li>
+                    <li><a href="#contact" class="bg-blue-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 text-sm sm:text-base">立即體驗</a></li>
+                </ul>
+            </nav>
+            <!-- Hamburger Icon for Mobile -->
+            <button id="hamburgerBtn" class="sm:hidden p-2 text-gray-700 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Menu (Hamburger Menu) -->
+    <div id="mobileMenu" class="mobile-menu fixed top-0 right-0 w-full h-full bg-blue-700 text-white z-50 flex flex-col items-center justify-center space-y-8">
+        <button id="closeMenuBtn" class="absolute top-4 right-4 p-2 text-white focus:outline-none">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <ul class="flex flex-col items-center space-y-6 text-xl">
+            <li><a href="#features-intro-video" class="nav-link-mobile hover:text-blue-200 transition duration-300" onclick="closeMobileMenu()">系統介紹</a></li>
+            <li><a href="#features" class="nav-link-mobile hover:text-blue-200 transition duration-300" onclick="closeMobileMenu()">核心功能</a></li>
+            <li><a href="#advanced-features" class="nav-link-mobile hover:text-blue-200 transition duration-300" onclick="closeMobileMenu()">進階特色</a></li>
+            <li><a href="#applications" class="nav-link-mobile hover:text-blue-200 transition duration-300" onclick="closeMobileMenu()">應用面向</a></li>
+            <li><a href="#interview-video" class="nav-link-mobile hover:text-blue-200 transition duration-300" onclick="closeMobileMenu()">主任訪談</a></li>
+            <li><a href="#contact" class="bg-white text-blue-700 px-6 py-3 rounded-full shadow-lg hover:bg-blue-100 transition duration-300" onclick="closeMobileMenu()">立即體驗</a></li>
+        </ul>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-16 md:py-20 px-4 text-center rounded-b-3xl shadow-xl">
+        <div class="container mx-auto">
+            <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6 leading-tight">
+                i助教：國小學習，一站式搞定！
+            </h2>
+            <p class="text-lg sm:text-xl md:text-2xl mb-8 md:mb-10 max-w-3xl mx-auto opacity-90">
+                專為國小設計的學習輔助系統，協助老師教學、學生自學，從理解、練習、分析、補強到複習，全面提升學習效率。
+            </p>
+            <a href="#features" class="inline-block bg-white text-blue-600 font-bold py-2 px-6 sm:py-3 sm:px-8 rounded-full text-base sm:text-lg shadow-lg hover:bg-blue-100 transform hover:scale-105 transition duration-300">
+                探索核心功能
+            </a>
+        </div>
+    </section>
+
+    <!-- New Section for Introductory Video Slider -->
+    <section id="features-intro-video" class="py-12 md:py-16 px-4 bg-gray-100">
+        <div class="container mx-auto">
+            <h3 class="text-3xl sm:text-4xl font-bold text-center mb-8 md:mb-12 text-blue-700">i助教系統介紹影片</h3>
+            <div id="introVideoSliderContainer" class="relative mx-auto max-w-4xl shadow-lg rounded-xl overflow-hidden">
+                <div id="videoSlider" class="flex gap-4 md:gap-8 overflow-x-scroll snap-x snap-mandatory scrollbar-hide py-4">
+                    <!-- Duplicate of Last Video (V3) -->
+                    <div class="video-slide flex-shrink-0 w-[calc(100%-4rem)] md:w-[calc(100%-8rem)] snap-center video-container rounded-lg">
+                        <iframe id="youtubeIntroVideo_dup_last"
+                            src="https://www.youtube.com/embed/Matz91H4Gj0?enablejsapi=1&autoplay=0&mute=1&rel=0"
+                            width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0"
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen>
+                        </iframe>
+                    </div>
+                    <!-- Actual Video 1 -->
+                    <div class="video-slide flex-shrink-0 w-[calc(100%-4rem)] md:w-[calc(100%-8rem)] snap-center video-container rounded-lg">
+                        <iframe id="youtubeIntroVideo_0"
+                            src="https://www.youtube.com/embed/AqoLmkYqYIg?enablejsapi=1&autoplay=0&mute=1&rel=0"
+                            width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0"
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen>
+                        </iframe>
+                    </div>
+                    <!-- Actual Video 2 -->
+                    <div class="video-slide flex-shrink-0 w-[calc(100%-4rem)] md:w-[calc(100%-8rem)] snap-center video-container rounded-lg">
+                        <iframe id="youtubeIntroVideo_1"
+                            src="https://www.youtube.com/embed/hl0fF0yA-hI?enablejsapi=1&autoplay=0&mute=1&rel=0"
+                            width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0"
+                            allow="autoplay; clipboard-write; encrypted-in-picture; web-share" allowfullscreen>
+                        </iframe>
+                    </div>
+                    <!-- Actual Video 3 -->
+                    <div class="video-slide flex-shrink-0 w-[calc(100%-4rem)] md:w-[calc(100%-8rem)] snap-center video-container rounded-lg">
+                        <iframe id="youtubeIntroVideo_2"
+                            src="https://www.youtube.com/embed/Matz91H4Gj0?enablejsapi=1&autoplay=0&mute=1&rel=0"
+                            width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0"
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen>
+                        </iframe>
+                    </div>
+                    <!-- Duplicate of First Video (V1) -->
+                    <div class="video-slide flex-shrink-0 w-[calc(100%-4rem)] md:w-[calc(100%-8rem)] snap-center video-container rounded-lg">
+                        <iframe id="youtubeIntroVideo_dup_first"
+                            src="https://www.youtube.com/embed/AqoLmkYqYIg?enablejsapi=1&autoplay=0&mute=1&rel=0"
+                            width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0"
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+                <!-- Navigation Buttons -->
+                <button id="prevVideoBtn" class="absolute top-1/2 left-4 -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-all duration-300 z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button id="nextVideoBtn" class="absolute top-1/2 right-4 -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-all duration-300 z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <!-- Dots Indicator -->
+                <div id="videoDots" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
+                    <!-- Dots will be generated by JS -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Features Section -->
+    <section id="features" class="py-12 md:py-16 px-4 bg-white">
+        <div class="container mx-auto">
+            <h3 class="text-3xl sm:text-4xl font-bold text-center mb-8 md:mb-12 text-blue-700">系統六大核心功能</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                <!-- Feature 1: 單元重點整理＋心智圖導學 - Now a direct link to Facebook -->
+                <a href="https://www.facebook.com/share/p/16wSsYK1Tq/" target="_blank" class="bg-blue-50 p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2 block">
+                    <div class="text-4xl sm:text-5xl text-blue-500 mb-3 md:mb-4">🧠</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-blue-800">單元重點整理＋心智圖導學</h4>
+                    <p class="text-sm sm:text-base text-gray-700">每課重點搭配心智圖，幫助孩子快速掌握核心概念，考前複習超有效，圖像化記憶更清晰。</p>
+                    <p class="text-xs sm:text-sm text-blue-500 mt-2">點擊前往 Facebook 了解更多</p>
+                </a>
+                <!-- Feature 2: 自由組卷出題 -->
+                <div class="bg-green-50 p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-4xl sm:text-5xl text-green-500 mb-3 md:mb-4">📝</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-green-800">自由組卷出題</h4>
+                    <p class="text-sm sm:text-base text-gray-700">可依科目、單元、題型、難度自由選擇題目，自訂考卷快速完成，支援列印與線上測驗。</p>
+                </div>
+                <!-- Feature 3: 線上測驗與自動批改 -->
+                <div class="bg-purple-50 p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-4xl sm:text-5xl text-purple-500 mb-3 md:mb-4">✅</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-purple-800">線上測驗與自動批改</h4>
+                    <p class="text-sm sm:text-base text-gray-700">即時批改、即時出分，馬上看到答題結果，適合日常練習或補強測驗使用。</p>
+                </div>
+                <!-- Feature 4: 測驗分析與錯題統計 - Now a direct link to Facebook -->
+                <a href="https://www.facebook.com/share/p/1CK1gtepfa/" target="_blank" class="bg-yellow-50 p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2 block">
+                    <div class="text-4xl sm:text-5xl text-yellow-500 mb-3 md:mb-4">📊</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-yellow-800">測驗分析與錯題統計</h4>
+                    <p class="text-sm sm:text-base text-gray-700">顯示每次測驗的整體表現、單題答對率，協助老師快速掌握學生弱點、不跳過重要題目。</p>
+                    <p class="text-xs sm:text-sm text-blue-500 mt-2">點擊前往 Facebook 了解更多</p>
+                </a>
+                <!-- Feature 5: 錯題本自動收集 -->
+                <div class="bg-red-50 p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-4xl sm:text-5xl text-red-500 mb-3 md:mb-4">📚</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-red-800">錯題本自動收集</h4>
+                    <p class="text-sm sm:text-base text-gray-700">所有錯誤題目自動歸檔、依單元分類，學生可重複練習，老師能追蹤成效。</p>
+                </div>
+                <!-- Feature 6: 弱點派卷／錯題再練 -->
+                <div class="bg-indigo-50 p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-4xl sm:text-5xl text-indigo-500 mb-3 md:mb-4">🎯</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-indigo-800">弱點派卷／錯題再練</h4>
+                    <p class="text-sm sm:text-base text-gray-700">系統依錯題記錄自動出卷，針對弱點補強練習，複習更精準，不再浪費時間在已會的題目上。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Features Section -->
+    <section id="advanced-features" class="py-12 md:py-16 px-4 bg-gray-100">
+        <div class="container mx-auto">
+            <h3 class="text-3xl sm:text-4xl font-bold text-center mb-8 md:mb-12 text-blue-700">進階特色功能</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <!-- Advanced Feature 1: 支援多種題型 -->
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-4xl sm:text-5xl text-blue-500 mb-3 md:mb-4">✍️</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-blue-800">支援多種題型</h4>
+                    <p class="text-sm sm:text-base text-gray-700">包含國字注音、選擇題、改錯字、計算題、應用題等，完整對應國小考題形式。</p>
+                </div>
+                <!-- Advanced Feature 2: 紙本測驗＋影像辨識批改 - Now a direct link to Google Drive -->
+                <a href="https://drive.google.com/file/d/1Bejo44QdOUgA-81W0br_vUKdrQgtcnc1/view?usp=share_link" target="_blank" class="bg-white p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2 block">
+                    <div class="text-4xl sm:text-5xl text-green-500 mb-3 md:mb-4">📸</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-green-800">紙本測驗＋影像辨識批改</h4>
+                    <p class="text-sm sm:text-base text-gray-700">組卷後可列印成紙本考卷，拍照後系統自動辨識作答與批改，保留紙筆練習習慣的同時也能數位化分析成效。</p>
+                    <p class="text-xs sm:text-sm text-blue-500 mt-2">點擊前往 Google Drive 了解更多</p>
+                </a>
+                <!-- Advanced Feature 3: 多平台登入與學習歷程記錄 -->
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-4xl sm:text-5xl text-purple-500 mb-3 md:mb-4">💻📱</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-purple-800">多平台登入與學習歷程記錄</h4>
+                    <p class="text-sm sm:text-base text-gray-700">學生、老師皆可跨裝置使用，系統自動記錄學習進度與錯題紀錄。</p>
+                </div>
+                <!-- Advanced Feature 4: 參考解答／補充教材專區 -->
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-4xl sm:text-5xl text-yellow-500 mb-3 md:mb-4">📖</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold mb-2 md:mb-3 text-yellow-800">參考解答／補充教材專區</h4>
+                    <p class="text-sm sm:text-base text-gray-700">可由後台分類上傳各年級各版本的習作／考卷解答、補充教材，權限可控，老師與主任可依需求查看或分享給學生。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Section for Branch Director Interview Video -->
+    <section id="interview-video" class="py-12 md:py-16 px-4 bg-blue-50">
+        <div class="container mx-auto">
+            <h3 class="text-3xl sm:text-4xl font-bold text-center mb-8 md:mb-12 text-blue-700">分校主任訪談</h3>
+            <div id="branchDirectorVideoContainer" class="video-container mx-auto max-w-4xl shadow-lg rounded-xl">
+                <iframe id="youtubeBranchDirectorVideo"
+                    src="https://www.youtube.com/embed/aoxAWbArAEw?enablejsapi=1&autoplay=0&mute=1&rel=0"
+                    width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Teaching Applications Section -->
+    <section id="applications" class="py-12 md:py-16 px-4 bg-white">
+        <div class="container mx-auto">
+            <h3 class="text-3xl sm:text-4xl font-bold text-center mb-8 md:mb-12 text-blue-700">教學應用面向</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                <!-- Application 1: 補救教學 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-5xl sm:text-6xl mb-3 md:mb-4">🩹</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold text-blue-800">補救教學</h4>
+                    <p class="text-sm sm:text-base text-gray-700">針對學力落後學生快速補強</p>
+                </div>
+                <!-- Application 2: 日常練習 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-5xl sm:text-6xl mb-3 md:mb-4">🗓️</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold text-blue-800">日常練習</h4>
+                    <p class="text-sm sm:text-base text-gray-700">10 分鐘每日練習、持續累積</p>
+                </div>
+                <!-- Application 3: 隨堂測驗 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-5xl sm:text-6xl mb-3 md:mb-4">⏱️</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold text-blue-800">隨堂測驗</h4>
+                    <p class="text-sm sm:text-base text-gray-700">老師快速出題、即時掌握學習狀況</p>
+                </div>
+                <!-- Application 4: 考前複習 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition duration-300 transform hover:-translate-y-2">
+                    <div class="text-5xl sm:text-6xl mb-3 md:mb-4">🚀</div>
+                    <h4 class="text-xl sm:text-2xl font-semibold text-blue-800">考前複習</h4>
+                    <p class="text-sm sm:text-base text-gray-700">重點提示＋錯題再練，效率提升</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section id="contact" class="bg-gradient-to-r from-indigo-600 to-blue-700 text-white py-16 md:py-20 px-4 text-center rounded-t-3xl shadow-xl">
+        <div class="container mx-auto">
+            <h3 class="text-4xl sm:text-5xl font-bold mb-4 md:mb-6">立即體驗「i助教」的學習新模式！</h3>
+            <p class="text-lg sm:text-xl mb-8 md:mb-10 max-w-2xl mx-auto opacity-90">
+                讓孩子愛上學習，讓教學更輕鬆。立即聯繫我們，了解更多詳圖！
+            </p>
+            <!-- 聯絡我們按鈕，已更新連結 -->
+            <a href="https://lin.ee/kOvEPvx" target="_blank" class="inline-block bg-white text-indigo-700 font-bold py-2 px-6 sm:py-3 sm:px-8 rounded-full text-base sm:text-lg shadow-lg hover:bg-indigo-100 transform hover:scale-105 transition duration-300">
+                聯繫我們
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-800 text-white py-6 px-4 text-center rounded-t-lg text-sm sm:text-base">
+        <div class="container mx-auto">
+            <p>&copy; 2025 i助教. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Modals (kept for other functionalities) -->
+    <!-- Facebook Video Modal (for "紙本測驗＋影像辨識批改") - No longer directly triggered by card, but kept for reference -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeVideoModalBtn">&times;</span>
+            <h4 class="text-xl sm:text-2xl font-semibold mb-4 text-gray-800 text-center">紙本測驗＋影像辨識批改示範</h4>
+            <div class="video-container">
+                <!-- Facebook 嵌入影片的 iframe -->
+                <iframe id="facebookVideo"
+                    src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Ffacebook%2Fvideos%2F10153231379946729%2F&show_text=0&width=560"
+                    width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0"
+                    allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+                </iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- YouTube IFrame Player API -->
+    <script>
+        // 1. Load the IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // Global player instances for YouTube videos
+        const youtubeVideoIds = [
+            "AqoLmkYqYIg", // Video 1
+            "hl0fF0yA-hI", // Video 2
+            "Matz91H4Gj0"  // Video 3
+        ];
+        let youtubePlayers = [];
+        let currentLogicalIndex = 0; // The logical index (0, 1, 2) of the video being displayed
+        let currentDisplayIndex = 1; // The actual index in the DOM (0-4)
+        let videoSliderElement; // Reference to the video slider div
+        let videoDotsContainer; // Reference to the dots container
+        let videoSlides; // NodeList of all video slides (5 of them)
+        let isScrolling = false; // Flag to prevent multiple scroll updates
+
+        // 2. This function creates an <iframe> (and YouTube player)
+        //    after the API code downloads.
+        function onYouTubeIframeAPIReady() {
+            videoSliderElement = document.getElementById('videoSlider');
+            videoDotsContainer = document.getElementById('videoDots');
+            videoSlides = videoSliderElement.querySelectorAll('.video-slide'); // Get all 5 slides
+
+            // Initialize all YouTube players (5 of them)
+            // The order here corresponds to the DOM order: dup_last, V1, V2, V3, dup_first
+            const playerIdsInDOMOrder = [
+                "youtubeIntroVideo_dup_last",
+                "youtubeIntroVideo_0",
+                "youtubeIntroVideo_1",
+                "youtubeIntroVideo_2",
+                "youtubeIntroVideo_dup_first"
+            ];
+
+            playerIdsInDOMOrder.forEach((id, index) => {
+                youtubePlayers.push(new YT.Player(id, {
+                    events: {
+                        'onReady': (event) => {
+                            // Mute all players on ready
+                            event.target.mute();
+                            // If this is the initially active video, play it
+                            if (index === currentDisplayIndex) {
+                                event.target.playVideo();
+                            }
+                        },
+                        'onStateChange': onPlayerStateChange
+                    }
+                }));
+            });
+
+            // Set initial scroll position to the first actual video (index 1 in DOM)
+            // Use setTimeout to ensure iframes are rendered and have offsetLeft values
+            setTimeout(() => {
+                videoSliderElement.scrollLeft = videoSlides[currentDisplayIndex].offsetLeft;
+                updateDots(); // Initial dot update
+            }, 100); // Small delay to ensure rendering
+
+            // Initialize the branch director video player separately
+            branchDirectorPlayer = new YT.Player('youtubeBranchDirectorVideo', {
+                events: {
+                    'onReady': (event) => setupVideoObserver(event.target, 'branchDirectorVideoContainer'),
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+
+            // Add scroll event listener to the slider to update dots and handle looping
+            videoSliderElement.addEventListener('scroll', debounce(handleSliderScroll, 100));
+            videoSliderElement.addEventListener('scrollend', handleScrollEnd); // For browsers that support scrollend
+            // Fallback for browsers not supporting scrollend (e.g., Firefox, Safari)
+            let scrollTimeout;
+            videoSliderElement.addEventListener('scroll', () => {
+                clearTimeout(scrollTimeout);
+                isScrolling = true;
+                scrollTimeout = setTimeout(() => {
+                    if (isScrolling) { // Only call if still scrolling after debounce
+                        handleScrollEnd();
+                    }
+                }, 150); // Adjust debounce time as needed
+            });
+        }
+
+        // Debounce function to limit scroll event calls
+        function debounce(func, delay) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // Handles the scroll event to update active video and dots
+        function handleSliderScroll() {
+            if (!videoSlides || videoSlides.length === 0) return;
+
+            const scrollLeft = videoSliderElement.scrollLeft;
+            const slideWidth = videoSlides[0].offsetWidth;
+            const gap = parseFloat(getComputedStyle(videoSliderElement).gap) || 0;
+
+            // Calculate the new display index based on scroll position
+            let newDisplayIndex = Math.round(scrollLeft / (slideWidth + gap));
+
+            if (newDisplayIndex !== currentDisplayIndex) {
+                // Pause the previously active video
+                const prevPlayer = youtubePlayers[currentDisplayIndex];
+                if (prevPlayer && typeof prevPlayer.pauseVideo === 'function') {
+                    prevPlayer.pauseVideo();
+                }
+
+                currentDisplayIndex = newDisplayIndex;
+                currentLogicalIndex = (currentDisplayIndex - 1 + youtubeVideoIds.length) % youtubeVideoIds.length;
+
+                // Play the newly active video (muted)
+                const currentPlayer = youtubePlayers[currentDisplayIndex];
+                if (currentPlayer && typeof currentPlayer.playVideo === 'function') {
+                    currentPlayer.mute();
+                    currentPlayer.playVideo();
+                }
+                updateDots();
+            }
+        }
+
+        // Handles the end of a scroll event for seamless looping
+        function handleScrollEnd() {
+            isScrolling = false; // Reset scrolling flag
+
+            // Check if we are on a duplicate slide and jump instantly to the real one
+            if (currentDisplayIndex === 0) { // If on the duplicate of the last video
+                videoSliderElement.scrollLeft = videoSlides[youtubeVideoIds.length].offsetLeft;
+                currentDisplayIndex = youtubeVideoIds.length; // Update display index to the real last video
+                currentLogicalIndex = youtubeVideoIds.length - 1; // Update logical index
+                updateDots(); // Update dots to reflect logical index
+            } else if (currentDisplayIndex === youtubeVideoIds.length + 1) { // If on the duplicate of the first video
+                videoSliderElement.scrollLeft = videoSlides[1].offsetLeft;
+                currentDisplayIndex = 1; // Update display index to the real first video
+                currentLogicalIndex = 0; // Update logical index
+                updateDots(); // Update dots to reflect logical index
+            }
+            // Ensure the current video is playing after any jump
+            const currentPlayer = youtubePlayers[currentDisplayIndex];
+            if (currentPlayer && typeof currentPlayer.playVideo === 'function') {
+                currentPlayer.mute();
+                currentPlayer.playVideo();
+            }
+        }
+
+
+        // Function to show a specific video in the slider (triggered by buttons/dots)
+        function showVideo(targetLogicalIndex, smoothScroll = true) {
+            if (!videoSlides || videoSlides.length === 0) return;
+
+            let targetDisplayIndex;
+
+            // Determine targetDisplayIndex based on targetLogicalIndex for direct access (dots)
+            // or relative movement (buttons)
+            if (targetLogicalIndex !== undefined) { // If coming from a dot click or direct logical index
+                targetDisplayIndex = targetLogicalIndex + 1; // Real videos are at index 1, 2, 3
+            } else { // If coming from next/prev buttons
+                // Calculate next/prev display index for smooth transition
+                if (event.currentTarget.id === 'nextVideoBtn') {
+                    targetDisplayIndex = currentDisplayIndex + 1;
+                } else if (event.currentTarget.id === 'prevVideoBtn') {
+                    targetDisplayIndex = currentDisplayIndex - 1;
+                }
+            }
+
+            // Perform the scroll
+            videoSliderElement.scrollTo({
+                left: videoSlides[targetDisplayIndex].offsetLeft,
+                behavior: smoothScroll ? 'smooth' : 'auto'
+            });
+
+            // Update indices immediately for UI responsiveness, actual jump handled by scrollend
+            currentDisplayIndex = targetDisplayIndex;
+            currentLogicalIndex = (currentDisplayIndex - 1 + youtubeVideoIds.length) % youtubeVideoIds.length;
+
+            // Pause all players, then play the target one (will be played again by handleScrollEnd)
+            youtubePlayers.forEach(player => {
+                if (player && typeof player.pauseVideo === 'function') {
+                    player.pauseVideo();
+                }
+            });
+            const currentPlayer = youtubePlayers[currentDisplayIndex];
+            if (currentPlayer && typeof currentPlayer.playVideo === 'function') {
+                currentPlayer.mute();
+                currentPlayer.playVideo();
+            }
+            updateDots();
+        }
+
+        // Functions for next/previous video
+        function nextVideo() {
+            showVideo(undefined, true); // Pass undefined to let showVideo determine based on currentDisplayIndex
+        }
+
+        function prevVideo() {
+            showVideo(undefined, true); // Pass undefined to let showVideo determine based on currentDisplayIndex
+        }
+
+        // Create dots for video navigation
+        function createDots() {
+            videoDotsContainer.innerHTML = ''; // Clear existing dots
+            youtubeVideoIds.forEach((_, index) => {
+                const dot = document.createElement('span');
+                dot.classList.add('dot');
+                // Dots represent logical videos, so use currentLogicalIndex
+                if (index === currentLogicalIndex) {
+                    dot.classList.add('active');
+                }
+                dot.addEventListener('click', () => showVideo(index)); // Pass logical index
+                videoDotsContainer.appendChild(dot);
+            });
+        }
+
+        // Update dot active state
+        function updateDots() {
+            const dots = videoDotsContainer.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                if (index === currentLogicalIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Event listeners for slider navigation buttons
+        document.getElementById('prevVideoBtn').addEventListener('click', prevVideo);
+        document.getElementById('nextVideoBtn').addEventListener('click', nextVideo);
+
+
+        // Helper function for other single video embeds (like branch director)
+        function setupVideoObserver(playerInstance, containerId) {
+            const videoContainer = document.getElementById(containerId);
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        playerInstance.playVideo(); // Play video when in view
+                    } else {
+                        playerInstance.pauseVideo(); // Pause video when out of view
+                    }
+                });
+            }, { threshold: 0.5 }); // Trigger when 50% of the video is visible
+
+            observer.observe(videoContainer);
+        }
+
+        // 4. The API calls this function when the player's state changes.
+        function onPlayerStateChange(event) {
+            // Optional: Add logic based on player state changes if needed
+        }
+
+        // Hamburger menu functionality
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('open');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('open');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        hamburgerBtn.addEventListener('click', openMobileMenu);
+        closeMenuBtn.addEventListener('click', closeMobileMenu);
+
+        // Smooth scroll for all internal navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault(); // Prevent default anchor link behavior
+
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    // Close mobile menu after clicking a link
+                    if (mobileMenu.classList.contains('open')) {
+                        closeMobileMenu();
+                    }
+                }
+            });
+        });
+
+
+        // Close mobile menu on resize if it's open (for better transition from mobile to desktop view)
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 640) { // Tailwind's 'sm' breakpoint
+                closeMobileMenu();
+            }
+        });
+
+
+        // Facebook Video Modal Elements (for "紙本測驗＋影像辨識批改")
+        const videoModal = document.getElementById('videoModal');
+        const closeVideoModalBtn = document.getElementById('closeVideoModalBtn');
+        const facebookVideoIframe = document.getElementById('facebookVideo');
+
+        // Close any modal when clicking outside (only applies to videoModal now)
+        window.onclick = function(event) {
+            if (event.target == videoModal) {
+                videoModal.style.display = 'none';
+                const currentSrc = facebookVideoIframe.src;
+                facebookVideoIframe.src = currentSrc; // Reload iframe to stop playback
+            }
+        }
+    </script>
+</body>
+</html>
